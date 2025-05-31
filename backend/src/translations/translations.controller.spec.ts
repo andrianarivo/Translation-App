@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TranslationController } from './translation.controller';
+import { TranslationsController } from './translations.controller';
 import { HttpStatus } from '@nestjs/common';
 
-describe('TranslationController', () => {
-  let controller: TranslationController;
+describe('TranslationsController', () => {
+  let controller: TranslationsController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [TranslationController],
+      controllers: [TranslationsController],
     }).compile();
 
-    controller = module.get<TranslationController>(TranslationController);
+    controller = module.get<TranslationsController>(TranslationsController);
   });
 
   describe('uploadJSON', () => {

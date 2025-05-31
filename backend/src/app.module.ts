@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TranslationController } from './translation/translation.controller';
+import { TranslationsController } from './translations/translations.controller';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from './prisma/prisma.service';
 import envSchema from './env-schema';
@@ -12,7 +12,7 @@ import envSchema from './env-schema';
       validationSchema: envSchema,
     }),
   ],
-  controllers: [AppController, TranslationController],
+  controllers: [AppController, TranslationsController],
   providers: [AppService, PrismaService],
 })
 export class AppModule {}
