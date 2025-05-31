@@ -7,10 +7,10 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { JsonFileValidator } from './json-file.validator';
+import { JsonFileValidator } from '../validators/json-file.validator';
 
-@Controller('import')
-export class ImportController {
+@Controller('translation')
+export class TranslationController {
   @Post('json')
   @UseInterceptors(FilesInterceptor('files'))
   uploadFile(
