@@ -8,12 +8,15 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JsonFileValidator } from '../validators/json-file.validator';
+import { TranslationsService } from './translations.service';
 
 @Controller('translations')
 export class TranslationsController {
+  constructor(private readonly translationsService: TranslationsService) {}
+
   @Post('import')
   @UseInterceptors(FilesInterceptor('files'))
-  uploadFile(
+  async importFiles(
     @UploadedFiles(
       new ParseFilePipeBuilder()
         .addMaxSizeValidator({
@@ -26,7 +29,15 @@ export class TranslationsController {
     )
     files: Express.Multer.File[],
   ) {
-    console.log('files', files);
-    return { status: HttpStatus.CREATED };
+    // store files in the database
+    const data = await Promise.all(
+      files.map((file) =>
+        this.translationsService.createTranslationFile({
+          filename: file.originalname,
+          content: file.buffer.toString(),
+        }),
+      ),
+    );
+    return { data };
   }
 }
