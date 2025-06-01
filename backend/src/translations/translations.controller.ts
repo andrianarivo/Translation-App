@@ -5,6 +5,8 @@ import {
   UseInterceptors,
   ParseFilePipeBuilder,
   HttpStatus,
+  Get,
+  Query, HttpCode,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JsonFileValidator } from '../validators/json-file.validator';
@@ -15,6 +17,7 @@ export class TranslationsController {
   constructor(private readonly translationsService: TranslationsService) {}
 
   @Post('import')
+  @HttpCode(201)
   @UseInterceptors(FilesInterceptor('files'))
   async importFiles(
     @UploadedFiles(
@@ -39,5 +42,12 @@ export class TranslationsController {
       ),
     );
     return { data };
+  }
+
+  @Get('parse')
+  @HttpCode(200)
+  parseFiles(@Query('id') ids: number[]) {
+    console.log(ids);
+    return;
   }
 }

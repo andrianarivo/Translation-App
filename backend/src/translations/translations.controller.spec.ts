@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TranslationsController } from './translations.controller';
-import { HttpStatus } from '@nestjs/common';
 import { TranslationsService } from './translations.service';
+import { Prisma } from '../../generated/prisma';
 
 describe('TranslationsController', () => {
   let controller: TranslationsController;
@@ -46,21 +46,25 @@ describe('TranslationsController', () => {
         },
       ];
 
-      mockTranslationsService.createTranslationFile.mockResolvedValue({
+      const mockResponse = {
         id: 1,
         filename: 'test',
         content: '{"test": "data"}',
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
+      };
+
+      mockTranslationsService.createTranslationFile.mockResolvedValue(
+        mockResponse,
+      );
 
       const result = await controller.importFiles(mockFiles);
 
-      expect(result.status).toBe(HttpStatus.CREATED);
+      expect(result).toEqual({ data: [mockResponse] });
       expect(
         mockTranslationsService.createTranslationFile,
       ).toHaveBeenCalledWith({
-        filename: 'test',
+        filename: 'test.json',
         content: '{"test": "data"}',
       });
       expect(
@@ -98,32 +102,46 @@ describe('TranslationsController', () => {
         },
       ];
 
-      mockTranslationsService.createTranslationFile.mockResolvedValue({
-        id: 1,
-        filename: 'test',
-        content: '{}',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      mockTranslationsService.createTranslationFile.mockImplementation(
+        (input: Prisma.TranslationFileCreateInput) => ({
+          id: input.filename === 'test1.json' ? 1 : 2,
+          filename: input.filename,
+          content: input.content,
+        }),
+      );
 
       const result = await controller.importFiles(mockFiles);
 
-      expect(result.status).toBe(HttpStatus.CREATED);
+      expect(result.data).toHaveLength(2);
       expect(
         mockTranslationsService.createTranslationFile,
       ).toHaveBeenCalledTimes(2);
       expect(
         mockTranslationsService.createTranslationFile,
       ).toHaveBeenNthCalledWith(1, {
-        filename: 'test1',
+        filename: 'test1.json',
         content: '{"test1": "data1"}',
       });
       expect(
         mockTranslationsService.createTranslationFile,
       ).toHaveBeenNthCalledWith(2, {
-        filename: 'test2',
+        filename: 'test2.json',
         content: '{"test2": "data2"}',
       });
+    });
+  });
+
+  describe('parseFiles', () => {
+    it('should parse files with given ids', () => {
+      const ids = [1, 2, 3];
+      const consoleSpy = jest.spyOn(console, 'log');
+
+      const result = controller.parseFiles(ids);
+
+      expect(consoleSpy).toHaveBeenCalledWith(ids);
+      expect(result).toBeUndefined();
+
+      consoleSpy.mockRestore();
     });
   });
 });

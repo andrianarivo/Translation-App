@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, TranslationFile } from '../../generated/prisma';
+import { Prisma, Translation, TranslationFile } from '../../generated/prisma';
 
 @Injectable()
 export class TranslationsService {
@@ -13,4 +13,8 @@ export class TranslationsService {
       data,
     });
   }
+
+  // async parseTranslationFile(ids: number[]): Promise<Translation> {
+  //
+  // }
 }
