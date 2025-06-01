@@ -16,10 +16,28 @@ datasource db {
 }
 
 model Translation {
-  id      Int    @id @default(autoincrement())
-  name    String @db.VarChar(255)
-  content String @db.Text()
-  version Int
+  id       Int       @id @default(autoincrement())
+  name     String    @db.VarChar(255)
+  version  Int
+  contents Content[]
 
   @@map("translations")
+}
+
+model Content {
+  id            Int         @id @default(autoincrement())
+  key           String      @db.VarChar(255)
+  value         String?     @db.VarChar(255)
+  translationId Int         @map("translation_id")
+  translation   Translation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  @@map("contents")
+}
+
+model TranslationFile {
+  id       Int    @id @default(autoincrement())
+  filename String @db.VarChar(255)
+  content  Json
+
+  @@map("translation_files")
 }
