@@ -116,4 +116,13 @@ export class TranslationsService {
       },
     });
   }
+
+  async locales(): Promise<string[]> {
+    const translations = await this.prisma.translation.findMany({
+      select: {
+        name: true,
+      },
+    });
+    return translations.map((translation) => translation.name);
+  }
 }

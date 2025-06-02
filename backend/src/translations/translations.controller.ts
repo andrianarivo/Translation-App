@@ -95,4 +95,10 @@ export class TranslationsController {
 
     return this.translationsService.translations(locales);
   }
+
+  @Get('locales')
+  @HttpCode(200)
+  getLocales() {
+    return this.translationsService.locales();
+  }
 }
