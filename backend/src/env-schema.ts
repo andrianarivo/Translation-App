@@ -6,6 +6,7 @@ const envSchema = Joi.object({
     .default('development'),
   PORT: Joi.number().port().default(3000),
   DATABASE_URL: Joi.string().required(),
+  FRONTEND_URL: Joi.string().required(),
 });
 
 export default envSchema;
