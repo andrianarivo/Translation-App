@@ -15,14 +15,46 @@ export class TranslationsService {
     });
   }
 
-  async translations(ids: number[]): Promise<Translation[]> {
-    return this.prisma.translation.findMany({
-      where: {
-        id: {
-          in: ids,
-        },
-      },
-    });
+  async translations(languages: string[]) {
+    const translationIds = languages
+      .map(
+        (lang, index) =>
+          `s${index + 1}.translation_id AS "translation%${lang}%id"`,
+      )
+      .join(', \n');
+
+    const contentIds = languages
+      .map((lang, index) => `s${index + 1}.content_id AS "content%${lang}%id"`)
+      .join(', \n');
+
+    const values = languages
+      .map((lang, index) => `s${index + 1}.value AS "${lang}"`)
+      .join(', \n');
+
+    let tables = '';
+    for (let i = 0; i < languages.length; i += 1) {
+      const lang = languages[i];
+      tables = tables.concat(`
+      (SELECT t.id AS translation_id,
+        c.id AS content_id,
+        c.key,
+        c.value,
+        t.name AS "${lang}"
+      FROM translations t 
+      JOIN contents c 
+      ON c.translation_id = t.id
+      WHERE t.name = '${lang}') s${i + 1}`);
+      if (i >= 1) {
+        tables = tables.concat(`\n\tON s1.key = s${i + 1}.key`);
+      }
+      if (i !== languages.length - 1) {
+        tables = tables.concat(`\n\tLEFT OUTER JOIN`);
+      }
+    }
+
+    return this.prisma.$queryRawUnsafe(
+      `SELECT ${translationIds}, ${contentIds}, s1.key, ${values} FROM ${tables}`,
+    );
   }
 
   async translationFiles(ids: number[]): Promise<TranslationFile[]> {

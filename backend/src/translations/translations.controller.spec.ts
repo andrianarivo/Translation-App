@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TranslationsController } from './translations.controller';
 import { TranslationsService } from './translations.service';
 import { Prisma } from '../../generated/prisma';
+import { BadRequestException } from '@nestjs/common';
 
 describe('TranslationsController', () => {
   let controller: TranslationsController;
@@ -11,6 +12,7 @@ describe('TranslationsController', () => {
     parseTranslationFile: jest.fn(),
     toggleTranslationFileParsed: jest.fn(),
     createTranslationFile: jest.fn(),
+    translations: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -135,8 +137,44 @@ describe('TranslationsController', () => {
   });
 
   describe('parseFiles', () => {
+    it('should throw BadRequestException when all files are already parsed', async () => {
+      const ids = [1, 2];
+      const mockTranslationFiles = [
+        {
+          id: 1,
+          filename: 'test1.json',
+          content: '{"key1": "value1"}',
+          parsed: true,
+        },
+        {
+          id: 2,
+          filename: 'test2.json',
+          content: '{"key2": "value2"}',
+          parsed: true,
+        },
+      ];
+
+      mockTranslationsService.translationFiles.mockResolvedValue(
+        mockTranslationFiles,
+      );
+
+      await expect(controller.parseFiles(ids)).rejects.toThrow(
+        new BadRequestException('All files are already parsed.'),
+      );
+
+      expect(mockTranslationsService.translationFiles).toHaveBeenCalledWith(
+        ids,
+      );
+      expect(
+        mockTranslationsService.parseTranslationFile,
+      ).not.toHaveBeenCalled();
+      expect(
+        mockTranslationsService.toggleTranslationFileParsed,
+      ).not.toHaveBeenCalled();
+    });
+
     it('should parse files and toggle their parsed status', async () => {
-      const ids = ['1', '2'];
+      const ids = [1, 2];
       const mockTranslationFiles = [
         {
           id: 1,
@@ -203,7 +241,7 @@ describe('TranslationsController', () => {
     });
 
     it('should handle parsing errors gracefully', async () => {
-      const ids = ['1'];
+      const ids = [1];
       const mockTranslationFiles = [
         {
           id: 1,
@@ -236,6 +274,51 @@ describe('TranslationsController', () => {
       expect(
         mockTranslationsService.toggleTranslationFileParsed,
       ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getTranslations', () => {
+    it('should return translations for valid locales', async () => {
+      const locales = ['en-US', 'fr-FR'];
+      const mockTranslations = [
+        { key: 'hello', en: 'Hello', fr: 'Bonjour' },
+        { key: 'goodbye', en: 'Goodbye', fr: 'Au revoir' },
+      ];
+
+      mockTranslationsService.translations.mockResolvedValue(mockTranslations);
+
+      const result = await controller.getTranslations(locales);
+
+      expect(mockTranslationsService.translations).toHaveBeenCalledWith(
+        locales,
+      );
+      expect(result).toEqual(mockTranslations);
+    });
+
+    it('should throw BadRequestException for invalid locales', async () => {
+      const locales = ['en', 'invalid'];
+
+      try {
+        await controller.getTranslations(locales);
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+      }
+
+      expect(mockTranslationsService.translations).not.toHaveBeenCalled();
+    });
+
+    it('should handle empty locales array', async () => {
+      const locales: string[] = [];
+      const mockTranslations = [];
+
+      mockTranslationsService.translations.mockResolvedValue(mockTranslations);
+
+      const result = await controller.getTranslations(locales);
+
+      expect(mockTranslationsService.translations).toHaveBeenCalledWith(
+        locales,
+      );
+      expect(result).toEqual(mockTranslations);
     });
   });
 });

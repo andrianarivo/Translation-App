@@ -16,11 +16,11 @@ describe('TranslationsService', () => {
     translation: {
       findFirst: jest.fn(),
       create: jest.fn(),
-      findMany: jest.fn(),
     },
     content: {
       createMany: jest.fn(),
     },
+    $queryRawUnsafe: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -71,23 +71,34 @@ describe('TranslationsService', () => {
   });
 
   describe('translations', () => {
-    it('should fetch translations by ids', async () => {
-      const mockIds = [1, 2];
-      const mockTranslations: Translation[] = [
-        { id: 1, name: 'test1', version: 0 },
-        { id: 2, name: 'test2', version: 0 },
+    it('should return correct translations for multiple languages', async () => {
+      const languages = ['en', 'fr'];
+      const mockResult = [
+        { key: 'greeting', en: 'Hello', fr: 'Bonjour' },
+        { key: 'farewell', en: 'Goodbye', fr: 'Au revoir' },
       ];
 
-      mockPrismaService.translation.findMany.mockResolvedValue(
-        mockTranslations,
-      );
+      mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockResult);
 
-      const result = await service.translations(mockIds);
+      const result = await service.translations(languages);
 
-      expect(mockPrismaService.translation.findMany).toHaveBeenCalledWith({
-        where: { id: { in: mockIds } },
-      });
-      expect(result).toEqual(mockTranslations);
+      expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalled();
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should return correct translations for single language', async () => {
+      const languages = ['en'];
+      const mockResult = [
+        { key: 'greeting', en: 'Hello' },
+        { key: 'farewell', en: 'Goodbye' },
+      ];
+
+      mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockResult);
+
+      const result = await service.translations(languages);
+
+      expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalled();
+      expect(result).toEqual(mockResult);
     });
   });
 

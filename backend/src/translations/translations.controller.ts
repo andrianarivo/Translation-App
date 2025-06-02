@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
+  ParseArrayPipe,
   ParseFilePipeBuilder,
   Post,
   Query,
@@ -12,6 +14,7 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JsonFileValidator } from '../validators/json-file.validator';
 import { TranslationsService } from './translations.service';
+import { validLocales } from '../utils/valid-locales';
 
 @Controller('translations')
 export class TranslationsController {
@@ -47,11 +50,21 @@ export class TranslationsController {
 
   @Get('parse')
   @HttpCode(200)
-  async parseFiles(@Query('id') queryIds: string[]) {
-    const ids = queryIds.map((id) => parseInt(id));
-
+  async parseFiles(
+    @Query('ids', new ParseArrayPipe({ items: Number, separator: ',' }))
+    ids: number[],
+  ) {
     const translationFiles =
       await this.translationsService.translationFiles(ids);
+
+    const allFilesParsed = translationFiles.reduce(
+      (acc: boolean, translationFile) => acc && translationFile.parsed,
+      true,
+    );
+
+    if (allFilesParsed) {
+      throw new BadRequestException('All files are already parsed.');
+    }
 
     const translations = await Promise.all(
       translationFiles.map((translationFile) =>
@@ -64,5 +77,22 @@ export class TranslationsController {
     );
 
     return translations;
+  }
+
+  @Get()
+  @HttpCode(200)
+  getTranslations(
+    @Query('locales', new ParseArrayPipe({ items: String, separator: ',' }))
+    locales: string[],
+  ) {
+    const allLocalesExist = locales.every((locale) =>
+      validLocales.includes(locale),
+    );
+
+    if (!allLocalesExist) {
+      throw new BadRequestException('Some locales are invalid.');
+    }
+
+    return this.translationsService.translations(locales);
   }
 }
