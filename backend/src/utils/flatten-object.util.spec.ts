@@ -27,8 +27,8 @@ describe('flattenObject', () => {
     };
 
     const expected = {
-      test: null,
-      screen: undefined,
+      test: 'null',
+      screen: 'undefined',
     };
 
     expect(flattenObject(input)).toEqual(expected);
@@ -42,7 +42,7 @@ describe('flattenObject', () => {
     };
 
     const expected = {
-      'test.array': [1, 2, 3],
+      'test.array': '[1,2,3]',
     };
 
     expect(flattenObject(input)).toEqual(expected);

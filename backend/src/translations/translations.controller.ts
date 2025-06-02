@@ -1,12 +1,13 @@
 import {
   Controller,
-  UploadedFiles,
-  Post,
-  UseInterceptors,
-  ParseFilePipeBuilder,
-  HttpStatus,
   Get,
-  Query, HttpCode,
+  HttpCode,
+  HttpStatus,
+  ParseFilePipeBuilder,
+  Post,
+  Query,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JsonFileValidator } from '../validators/json-file.validator';
@@ -46,8 +47,22 @@ export class TranslationsController {
 
   @Get('parse')
   @HttpCode(200)
-  parseFiles(@Query('id') ids: number[]) {
-    console.log(ids);
-    return;
+  async parseFiles(@Query('id') queryIds: string[]) {
+    const ids = queryIds.map((id) => parseInt(id));
+
+    const translationFiles =
+      await this.translationsService.translationFiles(ids);
+
+    const translations = await Promise.all(
+      translationFiles.map((translationFile) =>
+        this.translationsService.parseTranslationFile(translationFile),
+      ),
+    );
+
+    await Promise.all(
+      ids.map((id) => this.translationsService.toggleTranslationFileParsed(id)),
+    );
+
+    return translations;
   }
 }

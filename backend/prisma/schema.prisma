@@ -35,9 +35,10 @@ model Content {
 }
 
 model TranslationFile {
-  id       Int    @id @default(autoincrement())
-  filename String @db.VarChar(255)
-  content  Json
+  id       Int     @id @default(autoincrement())
+  filename String  @db.VarChar(255)
+  content  String  @db.Text()
+  parsed   Boolean @default(false)
 
   @@map("translation_files")
 }

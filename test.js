@@ -1,18 +1,28 @@
-function flattenObject(obj, prefix = '') {
+function flatten({obj, prefix = ''}) {
   const result = {};
-  
-  function flatten(obj, prefix) {
-    for (const key of Object.keys(obj)) {
-      const newKey = prefix ? `${prefix}.${key}` : key;
-      if (typeof obj[key] === 'object' && obj[key] !== null) {
-        flatten(obj[key], newKey);
-      } else {
-        result[newKey] = obj[key];
+
+  function isValidObject(value) {
+    return typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value) &&
+        !(value instanceof Date);
+  }
+
+  function flattenRecursive(obj, prefix) {
+    if (obj !== null) {
+      for (const key of Object.keys(obj)) {
+        const newKey = prefix ? `${prefix}.${key}` : key;
+
+        if (isValidObject(obj[key])) {
+          flattenRecursive(obj[key], newKey);
+        } else {
+          result[newKey] = String(obj[key]);
+        }
       }
     }
   }
-  
-  flatten(obj, prefix);
+
+  flattenRecursive(obj, prefix);
   return result;
 }
 
@@ -91,11 +101,11 @@ const jsonData = {
 };
 
 // Flatten the JSON object
-const flattened = flattenObject(jsonData);
-
+const flattened = flatten({obj: jsonData});
 // Output the result
-console.log(flattened);
-
+Object.entries(flattened).map(([key, value]) => {
+  console.log(`${key}: ${value}`);
+});
 //for (const key in jsonData) {
 //  console.log(jsonData.hasOwnProperty(key));
 //}

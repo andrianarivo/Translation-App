@@ -7,6 +7,9 @@ describe('TranslationsController', () => {
   let controller: TranslationsController;
 
   const mockTranslationsService = {
+    translationFiles: jest.fn(),
+    parseTranslationFile: jest.fn(),
+    toggleTranslationFileParsed: jest.fn(),
     createTranslationFile: jest.fn(),
   };
 
@@ -132,16 +135,107 @@ describe('TranslationsController', () => {
   });
 
   describe('parseFiles', () => {
-    it('should parse files with given ids', () => {
-      const ids = [1, 2, 3];
-      const consoleSpy = jest.spyOn(console, 'log');
+    it('should parse files and toggle their parsed status', async () => {
+      const ids = ['1', '2'];
+      const mockTranslationFiles = [
+        {
+          id: 1,
+          filename: 'test1.json',
+          content: '{"key1": "value1"}',
+          parsed: false,
+        },
+        {
+          id: 2,
+          filename: 'test2.json',
+          content: '{"key2": "value2"}',
+          parsed: false,
+        },
+      ];
+      const mockParsedTranslations = [
+        { id: 1, name: 'test1', version: 0 },
+        { id: 2, name: 'test2', version: 0 },
+      ];
+      const mockToggledFiles = mockTranslationFiles.map((file) => ({
+        ...file,
+        parsed: true,
+      }));
 
-      const result = controller.parseFiles(ids);
+      mockTranslationsService.translationFiles.mockResolvedValue(
+        mockTranslationFiles,
+      );
+      mockTranslationsService.parseTranslationFile.mockImplementation((file) =>
+        Promise.resolve(
+          mockParsedTranslations.find(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+            (t) => t.name === file.filename.split('.')[0],
+          ),
+        ),
+      );
+      mockTranslationsService.toggleTranslationFileParsed.mockImplementation(
+        (id) =>
+          Promise.resolve(mockToggledFiles.find((file) => file.id === id)),
+      );
 
-      expect(consoleSpy).toHaveBeenCalledWith(ids);
-      expect(result).toBeUndefined();
+      const result = await controller.parseFiles(ids);
 
-      consoleSpy.mockRestore();
+      expect(mockTranslationsService.translationFiles).toHaveBeenCalledWith([
+        1, 2,
+      ]);
+      expect(
+        mockTranslationsService.parseTranslationFile,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        mockTranslationsService.parseTranslationFile,
+      ).toHaveBeenNthCalledWith(1, mockTranslationFiles[0]);
+      expect(
+        mockTranslationsService.parseTranslationFile,
+      ).toHaveBeenNthCalledWith(2, mockTranslationFiles[1]);
+      expect(
+        mockTranslationsService.toggleTranslationFileParsed,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        mockTranslationsService.toggleTranslationFileParsed,
+      ).toHaveBeenNthCalledWith(1, 1);
+      expect(
+        mockTranslationsService.toggleTranslationFileParsed,
+      ).toHaveBeenNthCalledWith(2, 2);
+      expect(result).toEqual(mockParsedTranslations);
+    });
+
+    it('should handle parsing errors gracefully', async () => {
+      const ids = ['1'];
+      const mockTranslationFiles = [
+        {
+          id: 1,
+          filename: 'test1.json',
+          content: '{"key1": "value1"}',
+          parsed: false,
+        },
+      ];
+
+      mockTranslationsService.translationFiles.mockResolvedValue(
+        mockTranslationFiles,
+      );
+      mockTranslationsService.parseTranslationFile.mockRejectedValue(
+        new Error('Parse error'),
+      );
+      mockTranslationsService.toggleTranslationFileParsed.mockResolvedValue({
+        ...mockTranslationFiles[0],
+        parsed: true,
+      });
+
+      await expect(controller.parseFiles(ids)).rejects.toThrow('Parse error');
+
+      expect(mockTranslationsService.translationFiles).toHaveBeenCalledWith([
+        1,
+      ]);
+      expect(mockTranslationsService.parseTranslationFile).toHaveBeenCalledWith(
+        mockTranslationFiles[0],
+      );
+      // We should verify that toggleTranslationFileParsed is not called when parsing fails
+      expect(
+        mockTranslationsService.toggleTranslationFileParsed,
+      ).not.toHaveBeenCalled();
     });
   });
 });

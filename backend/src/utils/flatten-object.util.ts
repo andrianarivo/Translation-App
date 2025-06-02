@@ -4,30 +4,32 @@
  * @param prefix - The prefix to use for keys (used recursively)
  * @returns A flat object with dot-separated keys
  */
-export function flattenObject<T extends Record<string, any>>(
+export function flattenObject<T extends object>(
   obj: T,
   prefix = '',
-): Record<string, any> {
-  const result: Record<string, any> = {};
+): Record<string, string> {
+  const result: Record<string, string> = {};
 
-  const isValidObject = (value: any): boolean =>
+  const isValidObject = (value: object): boolean =>
     typeof value === 'object' &&
     value !== null &&
     !Array.isArray(value) &&
     !(value instanceof Date);
 
-  const flattenRecursive = (
-    currentObj: Record<string, any>,
-    currentPrefix: string,
-  ): void => {
-    for (const key of Object.keys(currentObj)) {
-      const newKey = currentPrefix ? `${currentPrefix}.${key}` : key;
+  const flattenRecursive = (curObj: object, curPref: string): void => {
+    if (curObj !== null) {
+      for (const key in curObj) {
+        const newKey = curPref ? `${curPref}.${key}` : key;
 
-      if (isValidObject(currentObj[key])) {
-        flattenRecursive(currentObj[key], newKey);
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        result[newKey] = currentObj[key];
+        if (isValidObject(curObj[key])) {
+          flattenRecursive(curObj[key], newKey);
+        } else {
+          if (Array.isArray(curObj[key])) {
+            result[newKey] = JSON.stringify(curObj[key]);
+          } else {
+            result[newKey] = String(curObj[key]);
+          }
+        }
       }
     }
   };
