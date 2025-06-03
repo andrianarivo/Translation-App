@@ -21,17 +21,6 @@ export class TranslationsService {
   }
 
   async translations(languages: string[]) {
-    const translationIds = languages
-      .map(
-        (lang, index) =>
-          `s${index + 1}.translation_id AS "translation%${lang}%id"`,
-      )
-      .join(', \n');
-
-    const contentIds = languages
-      .map((lang, index) => `s${index + 1}.content_id AS "content%${lang}%id"`)
-      .join(', \n');
-
     const values = languages
       .map((lang, index) => `s${index + 1}.value AS "${lang}"`)
       .join(', \n');
@@ -69,7 +58,7 @@ export class TranslationsService {
     }
 
     return this.prisma.$queryRawUnsafe(
-      `SELECT ${translationIds}, ${contentIds}, ${keys}, ${values} FROM ${tables}`,
+      `SELECT ${keys}, ${values} FROM ${tables}`,
     );
   }
 
