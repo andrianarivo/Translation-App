@@ -24,6 +24,9 @@ import {
 import {DataTablePagination} from "@/components/custom/data-table-pagination"
 import {DataTableProps} from "@/types/data-table"
 import {Input} from "@/components/ui/input";
+import {Button} from "@/components/ui/button";
+import {Trash2} from "lucide-react";
+import {DeleteTranslations} from "@/app/translations/delete-translations";
 
 export function TranslationTable<TData, TValue>({
                                              columns,
@@ -58,7 +61,7 @@ export function TranslationTable<TData, TValue>({
 
     return (
         <div>
-            <div className="flex items-center py-4">
+            <div className="flex items-center py-4 gap-2">
                 <Input
                     placeholder="Filter keys..."
                     value={(table.getColumn("key")?.getFilterValue() as string) ?? ""}
@@ -68,6 +71,7 @@ export function TranslationTable<TData, TValue>({
                     className="max-w-sm"
                 />
                 <DataTableViewOptions table={table} />
+                <DeleteTranslations table={table} />
             </div>
             <div className="rounded-md border">
                 <Table>
