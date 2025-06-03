@@ -1,7 +1,7 @@
-import Image from "next/image";
 import {ArrowRightIcon} from "lucide-react";
 import Link from "next/link";
 import {Button} from "@/components/ui/button";
+import {ImportFilesDialog} from "@/components/import-files-dialog";
 
 export default function Home() {
   return (
@@ -27,9 +27,7 @@ export default function Home() {
               <ArrowRightIcon className="size-4"/>
             </Button>
           </Link>
-          <Button className="rounded-xl" size="lg" variant="outline">
-            Import files
-          </Button>
+          <ImportFilesDialog />
         </div>
       </main>
     </div>
