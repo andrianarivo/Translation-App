@@ -1,14 +1,18 @@
 import {useQuery} from "@tanstack/react-query";
+import {fetchWrapper} from "@/lib/fetch-wrapper";
 
 async function fetchTranslations(locales: string[]) {
-    const data = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/translations?locales=${locales.join(",")}`)
-    return data.json()
+    return fetchWrapper({
+        path: `/translations?locales=${locales.join(",")}`,
+        method: "GET"
+    })
 }
 
 export function useTranslations(locales: string[]) {
     const { data, isLoading } = useQuery({
         queryKey: ["translations"],
         queryFn: () => fetchTranslations(locales),
+        enabled: locales.length > 0,
     })
 
     return {

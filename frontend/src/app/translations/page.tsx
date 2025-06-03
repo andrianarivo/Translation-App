@@ -6,7 +6,6 @@ import {
     BreadcrumbSeparator
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
-import QueryProvider from "@/providers/query-provider"
 import {TranslationTableContainer} from "@/app/translations/data-table-container"
 
 export default function Page() {
@@ -25,9 +24,7 @@ export default function Page() {
             </BreadcrumbList>
         </Breadcrumb>
         <div className="container mx-auto py-10">
-            <QueryProvider>
-                <TranslationTableContainer />
-            </QueryProvider>
+            <TranslationTableContainer />
         </div>
     </div>
 }

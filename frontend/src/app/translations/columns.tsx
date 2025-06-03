@@ -3,6 +3,7 @@
 import {ColumnDef} from "@tanstack/react-table";
 import {Checkbox} from "@/components/ui/checkbox";
 import {DataTableColumnHeader} from "@/components/custom/data-table-column-header";
+import {Translation} from "@/types/models";
 
 export const columns: ColumnDef<Translation>[] = [
     {

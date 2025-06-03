@@ -8,6 +8,7 @@ import {useLocales} from "@/app/translations/hooks/use-locales";
 import {HeaderContext} from "@tanstack/react-table";
 import {DataTableColumnHeader} from "@/components/custom/data-table-column-header";
 import * as React from "react";
+import {Translation} from "@/types/models";
 
 export function TranslationTableContainer() {
     const { locales, loading: isLoadingLocales, error } = useLocales()
@@ -17,7 +18,7 @@ export function TranslationTableContainer() {
         accessorKey: locale,
         header: ({ column }: HeaderContext<Translation, unknown>) => (
             <DataTableColumnHeader column={column} title={locale} />
-        )
+        ),
     })) : []
 
     let tableColumns = [

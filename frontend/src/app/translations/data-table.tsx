@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table"
 import {DataTablePagination} from "@/components/custom/data-table-pagination"
 import {DataTableProps} from "@/types/data-table"
+import {Input} from "@/components/ui/input";
 
 export function TranslationTable<TData, TValue>({
                                              columns,
@@ -58,6 +59,14 @@ export function TranslationTable<TData, TValue>({
     return (
         <div>
             <div className="flex items-center py-4">
+                <Input
+                    placeholder="Filter keys..."
+                    value={(table.getColumn("key")?.getFilterValue() as string) ?? ""}
+                    onChange={(event) =>
+                        table.getColumn("key")?.setFilterValue(event.target.value)
+                    }
+                    className="max-w-sm"
+                />
                 <DataTableViewOptions table={table} />
             </div>
             <div className="rounded-md border">
