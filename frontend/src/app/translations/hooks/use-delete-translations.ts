@@ -11,7 +11,7 @@ async function deleteTranslations(data: string[]) {
 export function useDeleteTranslations() {
     const queryClient = useQueryClient()
     return useMutation({
-        mutationKey: ["translations/contents"],
+        mutationKey: ["DELETE/translations/contents"],
         mutationFn: deleteTranslations,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['translations'] }),
     })

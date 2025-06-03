@@ -5,11 +5,16 @@ import * as React from "react";
 import {FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
 import {Translation} from "@/types/models";
-import {useLocales} from "@/app/translations/hooks/use-locales";
+import {Loader2} from "lucide-react";
 
-export function TranslationForm({ translation }: { translation?: Translation }) {
+interface TranslationFormProps {
+    translation?: Translation
+    locales: string[]
+    onSubmit: (data: Translation) => void
+    isLoading?: boolean
+}
 
-    const { locales } = useLocales()
+export function TranslationForm({ translation, locales, onSubmit, isLoading }: TranslationFormProps) {
 
     const form = useForm({
         defaultValues: translation,
@@ -17,7 +22,7 @@ export function TranslationForm({ translation }: { translation?: Translation }) 
 
     const inputs = translation ?
         Object.entries(translation)
-            .map(([key]) => (
+            .map(([key]) => (key === "key" || locales.includes(key)) && (
                 <FormField
                     control={form.control}
                     name={key}
@@ -51,13 +56,9 @@ export function TranslationForm({ translation }: { translation?: Translation }) 
                 />
         ))
 
-    const submit = () => {
-        console.log('caca')
-    }
-
     return (
         <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(submit)}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
                 <DialogHeader>
                     <DialogTitle>{translation ? "Edit" : "Create" } translation</DialogTitle>
                     <DialogDescription>
@@ -88,7 +89,11 @@ export function TranslationForm({ translation }: { translation?: Translation }) 
                     <DialogClose asChild>
                         <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button type="submit">Save changes</Button>
+                    <Button type="submit" disabled={isLoading || !form.formState.isDirty}>
+                        {isLoading ?
+                            <><Loader2 className="animate-spin" /> Saving...</> :
+                            <>Save changes</>}
+                    </Button>
                 </DialogFooter>
             </form>
         </FormProvider>

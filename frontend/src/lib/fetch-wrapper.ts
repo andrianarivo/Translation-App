@@ -1,13 +1,17 @@
+import {RequestHeaders} from "next/dist/client/components/router-reducer/fetch-server-response";
+
 interface FetchWrapperProps {
     path: string;
     body?: FormData | string;
     method?: string;
+    headers?: HeadersInit;
 }
 
-export function fetchWrapper({ path, body, method }: FetchWrapperProps) {
+export function fetchWrapper({ path, body, method, headers }: FetchWrapperProps) {
     return fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${path}`, {
         method,
-        body
+        body,
+        headers,
     })
         .then(response => {
             if (!response.ok) {
