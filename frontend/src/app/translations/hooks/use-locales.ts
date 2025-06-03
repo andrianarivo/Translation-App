@@ -8,7 +8,7 @@ async function fetchLocales() {
     })
 }
 
-export function useLocales() {
+export function useLocales(): { locales: string[], loading: boolean, error: boolean } {
     const { data, isLoading } = useQuery({
         queryKey: ["translations/locales"],
         queryFn: fetchLocales
