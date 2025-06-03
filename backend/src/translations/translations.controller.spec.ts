@@ -13,6 +13,9 @@ describe('TranslationsController', () => {
     toggleTranslationFileParsed: jest.fn(),
     createTranslationFile: jest.fn(),
     translations: jest.fn(),
+    getTranslationContents: jest.fn(),
+    deleteTranslations: jest.fn(),
+    locales: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -277,6 +280,36 @@ describe('TranslationsController', () => {
     });
   });
 
+  describe('getLocales', () => {
+    it('should return array of locales', async () => {
+      const mockLocales = ['en', 'fr', 'de'];
+      mockTranslationsService.locales.mockResolvedValue(mockLocales);
+
+      const result = await controller.getLocales();
+
+      expect(mockTranslationsService.locales).toHaveBeenCalled();
+      expect(result).toEqual(mockLocales);
+    });
+
+    it('should return empty array when no locales available', async () => {
+      mockTranslationsService.locales.mockResolvedValue([]);
+
+      const result = await controller.getLocales();
+
+      expect(mockTranslationsService.locales).toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it('should handle service errors', async () => {
+      mockTranslationsService.locales.mockRejectedValue(
+        new Error('Database error'),
+      );
+
+      await expect(controller.getLocales()).rejects.toThrow('Database error');
+      expect(mockTranslationsService.locales).toHaveBeenCalled();
+    });
+  });
+
   describe('getTranslations', () => {
     it('should return translations for valid locales', async () => {
       const locales = ['en-US', 'fr-FR'];
@@ -319,6 +352,65 @@ describe('TranslationsController', () => {
         locales,
       );
       expect(result).toEqual(mockTranslations);
+    });
+  });
+
+  describe('deleteContents', () => {
+    it('should successfully delete contents', async () => {
+      const keys = ['key1', 'key2', 'key3'];
+      const mockContents = [
+        { id: 1, key: 'key1', value: 'value1', translationId: 1 },
+        { id: 2, key: 'key2', value: 'value2', translationId: 1 },
+        { id: 3, key: 'key3', value: 'value3', translationId: 1 },
+      ];
+      const mockDeleteResult = { count: 3 };
+
+      mockTranslationsService.getTranslationContents.mockResolvedValue(
+        mockContents,
+      );
+      mockTranslationsService.deleteTranslations.mockResolvedValue(
+        mockDeleteResult,
+      );
+
+      const result = await controller.deleteContents(keys);
+
+      expect(
+        mockTranslationsService.getTranslationContents,
+      ).toHaveBeenCalledWith(keys);
+      expect(mockTranslationsService.deleteTranslations).toHaveBeenCalledWith(
+        keys,
+      );
+      expect(result).toEqual(mockContents);
+    });
+
+    it('should handle empty array of keys', async () => {
+      const keys: string[] = [];
+
+      await expect(controller.deleteContents(keys)).rejects.toThrow(
+        'Keys array is empty',
+      );
+      expect(
+        mockTranslationsService.getTranslationContents,
+      ).not.toHaveBeenCalled();
+      expect(mockTranslationsService.deleteTranslations).not.toHaveBeenCalled();
+    });
+    it('should throw when no contents found', async () => {
+      const keys = ['nonexistent.key1', 'nonexistent.key2'];
+      const mockDeleteResult = { count: 0 };
+
+      mockTranslationsService.getTranslationContents.mockResolvedValue(null);
+      mockTranslationsService.deleteTranslations.mockResolvedValue(
+        mockDeleteResult,
+      );
+
+      await expect(controller.deleteContents(keys)).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(
+        mockTranslationsService.getTranslationContents,
+      ).toHaveBeenCalledWith(keys);
+      expect(mockTranslationsService.deleteTranslations).not.toHaveBeenCalled();
     });
   });
 });

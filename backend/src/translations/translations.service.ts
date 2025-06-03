@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, Translation, TranslationFile } from '../../generated/prisma';
+import {
+  Content,
+  Prisma,
+  Translation,
+  TranslationFile,
+} from '../../generated/prisma';
 import { flattenObject } from '../utils/flatten-object.util';
 
 @Injectable()
@@ -135,5 +140,25 @@ export class TranslationsService {
       },
     });
     return translations.map((translation) => translation.name);
+  }
+
+  async deleteTranslations(keys: string[]): Promise<Prisma.BatchPayload> {
+    return this.prisma.content.deleteMany({
+      where: {
+        key: {
+          in: keys,
+        },
+      },
+    });
+  }
+
+  async getTranslationContents(keys: string[]): Promise<Content[]> {
+    return this.prisma.content.findMany({
+      where: {
+        key: {
+          in: keys,
+        },
+      },
+    });
   }
 }

@@ -19,6 +19,8 @@ describe('TranslationsService', () => {
     },
     content: {
       createMany: jest.fn(),
+      deleteMany: jest.fn(),
+      findMany: jest.fn(),
     },
     $queryRawUnsafe: jest.fn(),
   };
@@ -221,6 +223,84 @@ describe('TranslationsService', () => {
       await expect(service.toggleTranslationFileParsed(1)).rejects.toThrow(
         'Translation file not found',
       );
+    });
+  });
+
+  describe('deleteTranslations', () => {
+    it('should delete multiple contents by keys', async () => {
+      const mockKeys = ['greeting', 'farewell'];
+      const mockBatchPayload = { count: 2 };
+
+      mockPrismaService.content.deleteMany.mockResolvedValue(mockBatchPayload);
+
+      const result = await service.deleteTranslations(mockKeys);
+
+      expect(mockPrismaService.content.deleteMany).toHaveBeenCalledWith({
+        where: {
+          key: {
+            in: mockKeys,
+          },
+        },
+      });
+      expect(result).toEqual(mockBatchPayload);
+    });
+
+    it('should return batch payload with count 0 when no contents are deleted', async () => {
+      const mockKeys = ['nonexistent.key1', 'nonexistent.key2'];
+      const mockBatchPayload = { count: 0 };
+
+      mockPrismaService.content.deleteMany.mockResolvedValue(mockBatchPayload);
+
+      const result = await service.deleteTranslations(mockKeys);
+
+      expect(mockPrismaService.content.deleteMany).toHaveBeenCalledWith({
+        where: {
+          key: {
+            in: mockKeys,
+          },
+        },
+      });
+      expect(result).toEqual(mockBatchPayload);
+    });
+  });
+
+  describe('getTranslationContents', () => {
+    it('should return contents for given keys', async () => {
+      const mockKeys = ['greeting', 'farewell'];
+      const mockContents = [
+        { id: 1, key: 'greeting', value: 'Hello', translationId: 1 },
+        { id: 2, key: 'farewell', value: 'Goodbye', translationId: 1 },
+      ];
+
+      mockPrismaService.content.findMany.mockResolvedValue(mockContents);
+
+      const result = await service.getTranslationContents(mockKeys);
+
+      expect(mockPrismaService.content.findMany).toHaveBeenCalledWith({
+        where: {
+          key: {
+            in: mockKeys,
+          },
+        },
+      });
+      expect(result).toEqual(mockContents);
+    });
+
+    it('should return empty array when no contents found', async () => {
+      const mockKeys = ['nonexistent.key1', 'nonexistent.key2'];
+
+      mockPrismaService.content.findMany.mockResolvedValue([]);
+
+      const result = await service.getTranslationContents(mockKeys);
+
+      expect(mockPrismaService.content.findMany).toHaveBeenCalledWith({
+        where: {
+          key: {
+            in: mockKeys,
+          },
+        },
+      });
+      expect(result).toEqual([]);
     });
   });
 });

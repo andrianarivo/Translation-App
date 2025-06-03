@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -100,5 +101,24 @@ export class TranslationsController {
   @HttpCode(200)
   getLocales() {
     return this.translationsService.locales();
+  }
+
+  @Delete('contents')
+  @HttpCode(200)
+  async deleteContents(
+    @Query('keys', new ParseArrayPipe({ items: String, separator: ',' }))
+    keys: string[],
+  ) {
+    if (!keys.length) {
+      throw new BadRequestException('Keys array is empty');
+    }
+    const existingContents =
+      await this.translationsService.getTranslationContents(keys);
+    if (!existingContents)
+      throw new BadRequestException(
+        "Couldn't find any contents for given keys",
+      );
+    await this.translationsService.deleteTranslations(keys);
+    return existingContents;
   }
 }
