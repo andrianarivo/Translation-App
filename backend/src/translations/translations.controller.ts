@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Delete,
   Get,
@@ -8,6 +9,7 @@ import {
   ParseArrayPipe,
   ParseFilePipeBuilder,
   Post,
+  Put,
   Query,
   UploadedFiles,
   UseInterceptors,
@@ -16,6 +18,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { JsonFileValidator } from '../validators/json-file.validator';
 import { TranslationsService } from './translations.service';
 import { validLocales } from '../utils/valid-locales';
+import { UpdateContentDto } from './dto/UpdateContentDto';
 
 @Controller('translations')
 export class TranslationsController {
@@ -120,5 +123,22 @@ export class TranslationsController {
       );
     await this.translationsService.deleteTranslations(keys);
     return existingContents;
+  }
+
+  @Put('contents')
+  @HttpCode(200)
+  async updateContents(
+    @Body(new ParseArrayPipe({ items: UpdateContentDto }))
+    contentDtos: UpdateContentDto[],
+  ) {
+    if (contentDtos.length === 0) {
+      throw new BadRequestException('No contents provided.');
+    }
+
+    return await Promise.all(
+      contentDtos.map((contentDto) =>
+        this.translationsService.updateTranslationContent(contentDto),
+      ),
+    );
   }
 }

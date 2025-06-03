@@ -21,8 +21,25 @@ export class TranslationsService {
   }
 
   async translations(languages: string[]) {
+    const translationIds = languages
+      .map(
+        (lang, index) =>
+          `s${index + 1}.translation_id AS "translation_id%${lang}"`,
+      )
+      .join(', \n');
+
+    const contentIds = languages
+      .map((lang, index) => `s${index + 1}.content_id AS "content_id%${lang}"`)
+      .join(', \n');
+
     const values = languages
-      .map((lang, index) => `s${index + 1}.value AS "${lang}"`)
+      .map(
+        (lang, index) => `
+        CASE
+          WHEN s${index + 1}.value IS NULL THEN ''
+          WHEN s${index + 1}.value IS NOT NULL THEN s${index + 1}.value
+        END AS "${lang}"`,
+      )
       .join(', \n');
 
     let keys = 'CASE\n';
@@ -58,7 +75,7 @@ export class TranslationsService {
     }
 
     return this.prisma.$queryRawUnsafe(
-      `SELECT ${keys}, ${values} FROM ${tables}`,
+      `SELECT ${translationIds}, ${contentIds}, ${keys}, ${values} FROM ${tables}`,
     );
   }
 
@@ -147,6 +164,22 @@ export class TranslationsService {
         key: {
           in: keys,
         },
+      },
+    });
+  }
+
+  async updateTranslationContent({
+    id,
+    key,
+    value,
+  }: Partial<Content>): Promise<Content> {
+    return this.prisma.content.update({
+      where: {
+        id,
+      },
+      data: {
+        key,
+        value,
       },
     });
   }
