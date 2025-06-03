@@ -31,6 +31,17 @@ export class TranslationsService {
       .map((lang, index) => `s${index + 1}.value AS "${lang}"`)
       .join(', \n');
 
+    let keys = 'CASE\n';
+    keys = keys.concat(
+      languages
+        .map(
+          (lang, index) =>
+            `\nWHEN s${index + 1}.key IS NOT NULL THEN s${index + 1}.key`,
+        )
+        .join('\n'),
+    );
+    keys = keys.concat('\nEND as key');
+
     let tables = '';
     for (let i = 0; i < languages.length; i += 1) {
       const lang = languages[i];
@@ -48,12 +59,12 @@ export class TranslationsService {
         tables = tables.concat(`\n\tON s1.key = s${i + 1}.key`);
       }
       if (i !== languages.length - 1) {
-        tables = tables.concat(`\n\tLEFT OUTER JOIN`);
+        tables = tables.concat(`\n\tFULL OUTER JOIN`);
       }
     }
 
     return this.prisma.$queryRawUnsafe(
-      `SELECT ${translationIds}, ${contentIds}, s1.key, ${values} FROM ${tables}`,
+      `SELECT ${translationIds}, ${contentIds}, ${keys}, ${values} FROM ${tables}`,
     );
   }
 
