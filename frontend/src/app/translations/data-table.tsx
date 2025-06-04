@@ -25,10 +25,11 @@ import {DataTablePagination} from "@/components/custom/data-table-pagination"
 import {DataTableProps} from "@/types/data-table"
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {PlusIcon, Trash2} from "lucide-react";
+import {DownloadIcon, PlusIcon, Trash2} from "lucide-react";
 import {DeleteTranslations} from "@/app/translations/delete-translations";
 import {TranslationCreateContainer} from "@/app/translations/translation-create-container";
 import {TranslationCreateDialog} from "@/app/translations/translation-create-dialog";
+import {TranslationExport} from "@/app/translations/translation-export";
 
 export function TranslationTable<TData, TValue>({
                                              columns,
@@ -72,9 +73,10 @@ export function TranslationTable<TData, TValue>({
                     }
                     className="max-w-sm"
                 />
+                <TranslationExport />
                 <DataTableViewOptions table={table} />
-                <DeleteTranslations table={table} />
                 <TranslationCreateDialog />
+                <DeleteTranslations table={table} />
             </div>
             <div className="rounded-md border">
                 <Table>
