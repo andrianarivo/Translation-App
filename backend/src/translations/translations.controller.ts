@@ -19,6 +19,7 @@ import { JsonFileValidator } from '../validators/json-file.validator';
 import { TranslationsService } from './translations.service';
 import { validLocales } from '../utils/valid-locales';
 import { UpdateContentDto } from './dto/UpdateContentDto';
+import { CreateContentDto } from './dto/CreateContentDto';
 
 @Controller('translations')
 export class TranslationsController {
@@ -138,6 +139,23 @@ export class TranslationsController {
     return await Promise.all(
       contentDtos.map((contentDto) =>
         this.translationsService.updateTranslationContent(contentDto),
+      ),
+    );
+  }
+
+  @Post('contents')
+  @HttpCode(201)
+  async createContents(
+    @Body(new ParseArrayPipe({ items: CreateContentDto }))
+    contentDtos: CreateContentDto[],
+  ) {
+    if (contentDtos.length === 0) {
+      throw new BadRequestException('No contents provided.');
+    }
+
+    return await Promise.all(
+      contentDtos.map((contentDto) =>
+        this.translationsService.createTranslationContent(contentDto),
       ),
     );
   }

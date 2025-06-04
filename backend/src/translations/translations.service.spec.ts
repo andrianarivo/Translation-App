@@ -7,7 +7,6 @@ import {
   TranslationFile,
   Content,
 } from '../../generated/prisma';
-import { BadRequestException } from '@nestjs/common';
 
 describe('TranslationsService', () => {
   let service: TranslationsService;
@@ -29,6 +28,7 @@ describe('TranslationsService', () => {
       deleteMany: jest.fn(),
       findMany: jest.fn(),
       upsert: jest.fn(),
+      create: jest.fn(),
     },
     $queryRawUnsafe: jest.fn(),
   };
@@ -395,7 +395,7 @@ describe('TranslationsService', () => {
       expect(result).toEqual(mockUpsertedContent);
     });
 
-    it('should throw BadRequestException when translation not found', async () => {
+    it('should throw error when translation not found', async () => {
       const mockInput = {
         id: 1,
         key: 'greeting.hello',
@@ -558,6 +558,158 @@ describe('TranslationsService', () => {
         },
       });
       expect(result).toEqual(mockUpsertedContent);
+    });
+  });
+
+  describe('createTranslationContent', () => {
+    it('should create new translation content successfully', async () => {
+      const mockInput = {
+        key: 'welcome.message',
+        value: 'Bienvenue',
+        locale: 'fr',
+      };
+
+      const mockTranslation = {
+        id: 1,
+        name: 'fr',
+        version: 0,
+      };
+
+      const mockCreatedContent: Content = {
+        id: 10,
+        key: 'welcome.message',
+        value: 'Bienvenue',
+        translationId: 1,
+      };
+
+      mockPrismaService.translation.findFirst.mockResolvedValue(
+        mockTranslation,
+      );
+      mockPrismaService.content.create.mockResolvedValue(mockCreatedContent);
+
+      const result = await service.createTranslationContent(mockInput);
+
+      expect(mockPrismaService.translation.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: 'fr',
+        },
+      });
+      expect(mockPrismaService.content.create).toHaveBeenCalledWith({
+        data: {
+          key: 'welcome.message',
+          value: 'Bienvenue',
+          translationId: 1,
+        },
+      });
+      expect(result).toEqual(mockCreatedContent);
+    });
+
+    it('should throw error when locale not found', async () => {
+      const mockInput = {
+        key: 'welcome.message',
+        value: 'Welcome',
+        locale: 'nonexistent',
+      };
+
+      mockPrismaService.translation.findFirst.mockResolvedValue(null);
+
+      await expect(service.createTranslationContent(mockInput)).rejects.toThrow(
+        Error,
+      );
+      await expect(service.createTranslationContent(mockInput)).rejects.toThrow(
+        'Locale not found',
+      );
+
+      expect(mockPrismaService.translation.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: 'nonexistent',
+        },
+      });
+      expect(mockPrismaService.content.create).not.toHaveBeenCalled();
+    });
+
+    it('should create content with empty value', async () => {
+      const mockInput = {
+        key: 'empty.value',
+        value: '',
+        locale: 'en',
+      };
+
+      const mockTranslation = {
+        id: 2,
+        name: 'en',
+        version: 0,
+      };
+
+      const mockCreatedContent: Content = {
+        id: 11,
+        key: 'empty.value',
+        value: '',
+        translationId: 2,
+      };
+
+      mockPrismaService.translation.findFirst.mockResolvedValue(
+        mockTranslation,
+      );
+      mockPrismaService.content.create.mockResolvedValue(mockCreatedContent);
+
+      const result = await service.createTranslationContent(mockInput);
+
+      expect(mockPrismaService.translation.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: 'en',
+        },
+      });
+      expect(mockPrismaService.content.create).toHaveBeenCalledWith({
+        data: {
+          key: 'empty.value',
+          value: '',
+          translationId: 2,
+        },
+      });
+      expect(result).toEqual(mockCreatedContent);
+    });
+
+    it('should handle special characters in key and value', async () => {
+      const mockInput = {
+        key: 'special.éàù-test_key',
+        value: 'Contenu avec caractères spéciaux: <>!&',
+        locale: 'fr',
+      };
+
+      const mockTranslation = {
+        id: 1,
+        name: 'fr',
+        version: 0,
+      };
+
+      const mockCreatedContent: Content = {
+        id: 12,
+        key: 'special.éàù-test_key',
+        value: 'Contenu avec caractères spéciaux: <>!&',
+        translationId: 1,
+      };
+
+      mockPrismaService.translation.findFirst.mockResolvedValue(
+        mockTranslation,
+      );
+      mockPrismaService.content.create.mockResolvedValue(mockCreatedContent);
+
+      const result = await service.createTranslationContent(mockInput);
+
+      expect(mockPrismaService.translation.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: 'fr',
+        },
+      });
+      expect(mockPrismaService.content.create).toHaveBeenCalledWith({
+        data: {
+          key: 'special.éàù-test_key',
+          value: 'Contenu avec caractères spéciaux: <>!&',
+          translationId: 1,
+        },
+      });
+      expect(result).toEqual(mockCreatedContent);
     });
   });
 });

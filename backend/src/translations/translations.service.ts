@@ -202,4 +202,30 @@ export class TranslationsService {
       },
     });
   }
+
+  async createTranslationContent({
+    key,
+    value,
+    locale,
+  }: {
+    key: string;
+    value: string;
+    locale: string;
+  }): Promise<Content> {
+    const translation = await this.prisma.translation.findFirst({
+      where: {
+        name: locale,
+      },
+    });
+    if (!translation) {
+      throw new Error('Locale not found');
+    }
+    return this.prisma.content.create({
+      data: {
+        key,
+        value,
+        translationId: translation.id,
+      },
+    });
+  }
 }
