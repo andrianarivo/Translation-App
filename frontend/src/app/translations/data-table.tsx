@@ -25,8 +25,10 @@ import {DataTablePagination} from "@/components/custom/data-table-pagination"
 import {DataTableProps} from "@/types/data-table"
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {Trash2} from "lucide-react";
+import {PlusIcon, Trash2} from "lucide-react";
 import {DeleteTranslations} from "@/app/translations/delete-translations";
+import {TranslationCreateContainer} from "@/app/translations/translation-create-container";
+import {TranslationCreateDialog} from "@/app/translations/translation-create-dialog";
 
 export function TranslationTable<TData, TValue>({
                                              columns,
@@ -72,6 +74,7 @@ export function TranslationTable<TData, TValue>({
                 />
                 <DataTableViewOptions table={table} />
                 <DeleteTranslations table={table} />
+                <TranslationCreateDialog />
             </div>
             <div className="rounded-md border">
                 <Table>

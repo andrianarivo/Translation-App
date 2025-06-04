@@ -6,18 +6,49 @@ import {FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/compon
 import {Input} from "@/components/ui/input";
 import {Translation} from "@/types/models";
 import {Loader2} from "lucide-react";
+import {Joi} from "@/types/joi";
+import {joiResolver} from "@hookform/resolvers/joi";
 
 interface TranslationFormProps {
     translation?: Translation
     locales: string[]
     onSubmit: (data: Translation) => void
     isLoading?: boolean
+    errorMessage?: string
 }
 
-export function TranslationForm({ translation, locales, onSubmit, isLoading }: TranslationFormProps) {
+export function TranslationForm({
+                                    translation,
+                                    locales,
+                                    onSubmit,
+                                    isLoading,
+                                    errorMessage }: TranslationFormProps) {
+
+    const defaultValues = React.useMemo(() => {
+        const values = translation || {key: ''}
+        if (!translation) {
+            for (const locale of locales) {
+                values[locale] = ''
+            }
+        }
+        return values
+    }, [translation, locales])
+
+    const formSchema = React.useMemo(() => {
+        const schemaFields: Record<string, any> = {
+            key: Joi.string().required(),
+        };
+        locales.forEach(locale => {
+            schemaFields[`translation_id%${locale}`] = Joi.number();
+            schemaFields[`content_id%${locale}`] = Joi.number();
+            schemaFields[locale] = Joi.string().allow('');
+        });
+        return Joi.object(schemaFields);
+    }, [locales]);
 
     const form = useForm({
-        defaultValues: translation,
+        resolver: joiResolver(formSchema),
+        defaultValues,
     })
 
     const inputs = translation ?
@@ -63,6 +94,8 @@ export function TranslationForm({ translation, locales, onSubmit, isLoading }: T
                     <DialogTitle>{translation ? "Edit" : "Create" } translation</DialogTitle>
                     <DialogDescription>
                         Don't forget to save your changes.
+                        <br />
+                        {errorMessage && <span className="text-destructive">{errorMessage}</span>}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
