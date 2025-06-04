@@ -1,7 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TranslationsService } from './translations.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, Translation, TranslationFile } from '../../generated/prisma';
+import {
+  Prisma,
+  Translation,
+  TranslationFile,
+  Content,
+} from '../../generated/prisma';
+import { BadRequestException } from '@nestjs/common';
 
 describe('TranslationsService', () => {
   let service: TranslationsService;
@@ -15,13 +21,14 @@ describe('TranslationsService', () => {
     },
     translation: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       create: jest.fn(),
     },
     content: {
       createMany: jest.fn(),
       deleteMany: jest.fn(),
       findMany: jest.fn(),
-      update: jest.fn(),
+      upsert: jest.fn(),
     },
     $queryRawUnsafe: jest.fn(),
   };
@@ -227,6 +234,38 @@ describe('TranslationsService', () => {
     });
   });
 
+  describe('locales', () => {
+    it('should return list of translation names', async () => {
+      const mockTranslations = [{ name: 'en' }, { name: 'fr' }, { name: 'es' }];
+
+      mockPrismaService.translation.findMany.mockResolvedValue(
+        mockTranslations,
+      );
+
+      const result = await service.locales();
+
+      expect(mockPrismaService.translation.findMany).toHaveBeenCalledWith({
+        select: {
+          name: true,
+        },
+      });
+      expect(result).toEqual(['en', 'fr', 'es']);
+    });
+
+    it('should return empty array when no translations exist', async () => {
+      mockPrismaService.translation.findMany.mockResolvedValue([]);
+
+      const result = await service.locales();
+
+      expect(mockPrismaService.translation.findMany).toHaveBeenCalledWith({
+        select: {
+          name: true,
+        },
+      });
+      expect(result).toEqual([]);
+    });
+  });
+
   describe('deleteTranslations', () => {
     it('should delete multiple contents by keys', async () => {
       const mockKeys = ['greeting', 'farewell'];
@@ -304,200 +343,221 @@ describe('TranslationsService', () => {
       expect(result).toEqual([]);
     });
   });
+
   describe('updateTranslationContent', () => {
-    it('should update content with provided key and value', async () => {
-      const mockContent = {
+    it('should upsert content with provided data and locale', async () => {
+      const mockInput = {
         id: 1,
         key: 'greeting.hello',
         value: 'Bonjour',
+        locale: 'fr',
       };
-      const mockUpdatedContent = {
+
+      const mockTranslation = {
+        id: 1,
+        name: 'fr',
+        version: 0,
+      };
+
+      const mockUpsertedContent: Content = {
         id: 1,
         key: 'greeting.hello',
         value: 'Bonjour',
         translationId: 1,
       };
 
-      mockPrismaService.content.update.mockResolvedValue(mockUpdatedContent);
+      mockPrismaService.translation.findFirst.mockResolvedValue(
+        mockTranslation,
+      );
+      mockPrismaService.content.upsert.mockResolvedValue(mockUpsertedContent);
 
-      const result = await service.updateTranslationContent(mockContent);
+      const result = await service.updateTranslationContent(mockInput);
 
-      expect(mockPrismaService.content.update).toHaveBeenCalledWith({
+      expect(mockPrismaService.translation.findFirst).toHaveBeenCalledWith({
         where: {
-          id: mockContent.id,
-        },
-        data: {
-          key: mockContent.key,
-          value: mockContent.value,
+          name: 'fr',
         },
       });
-      expect(result).toEqual(mockUpdatedContent);
-    });
-
-    it('should update content with empty value', async () => {
-      const mockContent = {
-        id: 2,
-        key: 'greeting.goodbye',
-        value: '',
-      };
-      const mockUpdatedContent = {
-        id: 2,
-        key: 'greeting.goodbye',
-        value: '',
-        translationId: 1,
-      };
-
-      mockPrismaService.content.update.mockResolvedValue(mockUpdatedContent);
-
-      const result = await service.updateTranslationContent(mockContent);
-
-      expect(mockPrismaService.content.update).toHaveBeenCalledWith({
+      expect(mockPrismaService.content.upsert).toHaveBeenCalledWith({
         where: {
-          id: mockContent.id,
+          id: 1,
         },
-        data: {
-          key: mockContent.key,
-          value: mockContent.value,
+        create: {
+          key: 'greeting.hello',
+          value: 'Bonjour',
+          translationId: 1,
+        },
+        update: {
+          key: 'greeting.hello',
+          value: 'Bonjour',
         },
       });
-      expect(result).toEqual(mockUpdatedContent);
+      expect(result).toEqual(mockUpsertedContent);
     });
 
-    it('should update content with nested key', async () => {
-      const mockContent = {
-        id: 3,
-        key: 'navigation.menu.items.home',
-        value: 'Accueil',
+    it('should throw BadRequestException when translation not found', async () => {
+      const mockInput = {
+        id: 1,
+        key: 'greeting.hello',
+        value: 'Hello',
+        locale: 'nonexistent',
       };
-      const mockUpdatedContent = {
-        id: 3,
-        key: 'navigation.menu.items.home',
-        value: 'Accueil',
+
+      mockPrismaService.translation.findFirst.mockResolvedValue(null);
+
+      await expect(service.updateTranslationContent(mockInput)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateTranslationContent(mockInput)).rejects.toThrow(
+        'Translation not found',
+      );
+
+      expect(mockPrismaService.translation.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: 'nonexistent',
+        },
+      });
+      expect(mockPrismaService.content.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should create new content when upserting with non-existing id', async () => {
+      const mockInput = {
+        id: 999,
+        key: 'new.key',
+        value: 'New Value',
+        locale: 'en',
+      };
+
+      const mockTranslation = {
+        id: 2,
+        name: 'en',
+        version: 0,
+      };
+
+      const mockCreatedContent: Content = {
+        id: 999,
+        key: 'new.key',
+        value: 'New Value',
         translationId: 2,
       };
 
-      mockPrismaService.content.update.mockResolvedValue(mockUpdatedContent);
+      mockPrismaService.translation.findFirst.mockResolvedValue(
+        mockTranslation,
+      );
+      mockPrismaService.content.upsert.mockResolvedValue(mockCreatedContent);
 
-      const result = await service.updateTranslationContent(mockContent);
+      const result = await service.updateTranslationContent(mockInput);
 
-      expect(mockPrismaService.content.update).toHaveBeenCalledWith({
+      expect(mockPrismaService.content.upsert).toHaveBeenCalledWith({
         where: {
-          id: mockContent.id,
+          id: 999,
         },
-        data: {
-          key: mockContent.key,
-          value: mockContent.value,
+        create: {
+          key: 'new.key',
+          value: 'New Value',
+          translationId: 2,
+        },
+        update: {
+          key: 'new.key',
+          value: 'New Value',
         },
       });
-      expect(result).toEqual(mockUpdatedContent);
+      expect(result).toEqual(mockCreatedContent);
+    });
+
+    it('should handle empty values', async () => {
+      const mockInput = {
+        id: 1,
+        key: 'greeting.empty',
+        value: '',
+        locale: 'en',
+      };
+
+      const mockTranslation = {
+        id: 1,
+        name: 'en',
+        version: 0,
+      };
+
+      const mockUpsertedContent: Content = {
+        id: 1,
+        key: 'greeting.empty',
+        value: '',
+        translationId: 1,
+      };
+
+      mockPrismaService.translation.findFirst.mockResolvedValue(
+        mockTranslation,
+      );
+      mockPrismaService.content.upsert.mockResolvedValue(mockUpsertedContent);
+
+      const result = await service.updateTranslationContent(mockInput);
+
+      expect(mockPrismaService.content.upsert).toHaveBeenCalledWith({
+        where: {
+          id: 1,
+        },
+        create: {
+          key: 'greeting.empty',
+          value: '',
+          translationId: 1,
+        },
+        update: {
+          key: 'greeting.empty',
+          value: '',
+        },
+      });
+      expect(result).toEqual(mockUpsertedContent);
     });
 
     it('should handle special characters in key and value', async () => {
-      const mockContent = {
+      const mockInput = {
         id: 4,
         key: 'special.characters-test_key',
         value: 'Valeur avec caractères spéciaux: éàù & <>!',
+        locale: 'fr',
       };
-      const mockUpdatedContent = {
+
+      const mockTranslation = {
+        id: 1,
+        name: 'fr',
+        version: 0,
+      };
+
+      const mockUpsertedContent: Content = {
         id: 4,
         key: 'special.characters-test_key',
         value: 'Valeur avec caractères spéciaux: éàù & <>!',
         translationId: 1,
       };
 
-      mockPrismaService.content.update.mockResolvedValue(mockUpdatedContent);
+      mockPrismaService.translation.findFirst.mockResolvedValue(
+        mockTranslation,
+      );
+      mockPrismaService.content.upsert.mockResolvedValue(mockUpsertedContent);
 
-      const result = await service.updateTranslationContent(mockContent);
+      const result = await service.updateTranslationContent(mockInput);
 
-      expect(mockPrismaService.content.update).toHaveBeenCalledWith({
+      expect(mockPrismaService.translation.findFirst).toHaveBeenCalledWith({
         where: {
-          id: mockContent.id,
-        },
-        data: {
-          key: mockContent.key,
-          value: mockContent.value,
+          name: 'fr',
         },
       });
-      expect(result).toEqual(mockUpdatedContent);
-    });
-
-    it('should update content with partial data (only key)', async () => {
-      const mockContent = {
-        id: 5,
-        key: 'new.key',
-      };
-      const mockUpdatedContent = {
-        id: 5,
-        key: 'new.key',
-        value: 'existing value',
-        translationId: 1,
-      };
-
-      mockPrismaService.content.update.mockResolvedValue(mockUpdatedContent);
-
-      const result = await service.updateTranslationContent(mockContent);
-
-      expect(mockPrismaService.content.update).toHaveBeenCalledWith({
+      expect(mockPrismaService.content.upsert).toHaveBeenCalledWith({
         where: {
-          id: mockContent.id,
+          id: 4,
         },
-        data: {
-          key: mockContent.key,
+        create: {
+          key: 'special.characters-test_key',
+          value: 'Valeur avec caractères spéciaux: éàù & <>!',
+          translationId: 1,
+        },
+        update: {
+          key: 'special.characters-test_key',
+          value: 'Valeur avec caractères spéciaux: éàù & <>!',
         },
       });
-      expect(result).toEqual(mockUpdatedContent);
-    });
-
-    it('should update content with partial data (only value)', async () => {
-      const mockContent = {
-        id: 6,
-        value: 'new value',
-      };
-      const mockUpdatedContent = {
-        id: 6,
-        key: 'existing.key',
-        value: 'new value',
-        translationId: 1,
-      };
-
-      mockPrismaService.content.update.mockResolvedValue(mockUpdatedContent);
-
-      const result = await service.updateTranslationContent(mockContent);
-
-      expect(mockPrismaService.content.update).toHaveBeenCalledWith({
-        where: {
-          id: mockContent.id,
-        },
-        data: {
-          value: mockContent.value,
-        },
-      });
-      expect(result).toEqual(mockUpdatedContent);
-    });
-
-    it('should propagate Prisma errors when update fails', async () => {
-      const mockContent = {
-        id: 999,
-        key: 'test.key',
-        value: 'test value',
-      };
-      const prismaError = new Error('Record not found');
-
-      mockPrismaService.content.update.mockRejectedValue(prismaError);
-
-      await expect(
-        service.updateTranslationContent(mockContent),
-      ).rejects.toThrow('Record not found');
-
-      expect(mockPrismaService.content.update).toHaveBeenCalledWith({
-        where: {
-          id: mockContent.id,
-        },
-        data: {
-          key: mockContent.key,
-          value: mockContent.value,
-        },
-      });
+      expect(result).toEqual(mockUpsertedContent);
     });
   });
 });

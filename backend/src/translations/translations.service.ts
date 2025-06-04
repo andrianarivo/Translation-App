@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   Content,
@@ -172,12 +172,26 @@ export class TranslationsService {
     id,
     key,
     value,
-  }: Partial<Content>): Promise<Content> {
-    return this.prisma.content.update({
+    locale,
+  }: Omit<Content, 'translationId'> & { locale: string }): Promise<Content> {
+    const translation = await this.prisma.translation.findFirst({
+      where: {
+        name: locale,
+      },
+    });
+    if (!translation) {
+      throw new BadRequestException('Locale not found');
+    }
+    return this.prisma.content.upsert({
       where: {
         id,
       },
-      data: {
+      create: {
+        key,
+        value,
+        translationId: translation.id,
+      },
+      update: {
         key,
         value,
       },

@@ -3,6 +3,7 @@ import { TranslationsController } from './translations.controller';
 import { TranslationsService } from './translations.service';
 import { Prisma } from '../../generated/prisma';
 import { BadRequestException } from '@nestjs/common';
+import { UpdateContentDto } from './dto/UpdateContentDto';
 
 describe('TranslationsController', () => {
   let controller: TranslationsController;
@@ -16,6 +17,7 @@ describe('TranslationsController', () => {
     getTranslationContents: jest.fn(),
     deleteTranslations: jest.fn(),
     locales: jest.fn(),
+    updateTranslationContent: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -411,6 +413,194 @@ describe('TranslationsController', () => {
         mockTranslationsService.getTranslationContents,
       ).toHaveBeenCalledWith(keys);
       expect(mockTranslationsService.deleteTranslations).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateContents', () => {
+    it('should update multiple contents successfully', async () => {
+      const mockContentDtos: UpdateContentDto[] = [
+        {
+          id: 1,
+          key: 'greeting.hello',
+          value: 'Bonjour',
+          locale: 'fr-FR',
+        },
+        {
+          id: 2,
+          key: 'greeting.goodbye',
+          value: 'Au revoir',
+          locale: 'fr-FR',
+        },
+      ];
+
+      const mockUpdatedContents = [
+        {
+          id: 1,
+          key: 'greeting.hello',
+          value: 'Bonjour',
+          translationId: 1,
+        },
+        {
+          id: 2,
+          key: 'greeting.goodbye',
+          value: 'Au revoir',
+          translationId: 1,
+        },
+      ];
+
+      mockTranslationsService.updateTranslationContent
+        .mockResolvedValueOnce(mockUpdatedContents[0])
+        .mockResolvedValueOnce(mockUpdatedContents[1]);
+
+      const result = await controller.updateContents(mockContentDtos);
+
+      expect(result).toEqual(mockUpdatedContents);
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenNthCalledWith(1, mockContentDtos[0]);
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenNthCalledWith(2, mockContentDtos[1]);
+    });
+
+    it('should update single content successfully', async () => {
+      const mockContentDto: UpdateContentDto = {
+        id: 1,
+        key: 'greeting.hello',
+        value: 'Hello World',
+        locale: 'en-US',
+      };
+
+      const mockUpdatedContent = {
+        id: 1,
+        key: 'greeting.hello',
+        value: 'Hello World',
+        translationId: 2,
+      };
+
+      mockTranslationsService.updateTranslationContent.mockResolvedValue(
+        mockUpdatedContent,
+      );
+
+      const result = await controller.updateContents([mockContentDto]);
+
+      expect(result).toEqual([mockUpdatedContent]);
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenCalledWith(mockContentDto);
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw BadRequestException when no contents provided', async () => {
+      const emptyContentDtos: UpdateContentDto[] = [];
+
+      await expect(controller.updateContents(emptyContentDtos)).rejects.toThrow(
+        new BadRequestException('No contents provided.'),
+      );
+
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('should handle service errors during update', async () => {
+      const mockContentDto: UpdateContentDto = {
+        id: 999,
+        key: 'nonexistent.key',
+        value: 'Some value',
+        locale: 'en-US',
+      };
+
+      mockTranslationsService.updateTranslationContent.mockRejectedValue(
+        new BadRequestException('Translation not found'),
+      );
+
+      await expect(controller.updateContents([mockContentDto])).rejects.toThrow(
+        new BadRequestException('Translation not found'),
+      );
+
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenCalledWith(mockContentDto);
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle partial failures in batch update', async () => {
+      const mockContentDtos: UpdateContentDto[] = [
+        {
+          id: 1,
+          key: 'greeting.hello',
+          value: 'Bonjour',
+          locale: 'fr-FR',
+        },
+        {
+          id: 2,
+          key: 'invalid.key',
+          value: 'Invalid',
+          locale: 'nonexistent',
+        },
+      ];
+
+      const mockUpdatedContent = {
+        id: 1,
+        key: 'greeting.hello',
+        value: 'Bonjour',
+        translationId: 1,
+      };
+
+      mockTranslationsService.updateTranslationContent
+        .mockResolvedValueOnce(mockUpdatedContent)
+        .mockRejectedValueOnce(
+          new BadRequestException('Translation not found'),
+        );
+
+      await expect(controller.updateContents(mockContentDtos)).rejects.toThrow(
+        new BadRequestException('Translation not found'),
+      );
+
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenNthCalledWith(1, mockContentDtos[0]);
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenNthCalledWith(2, mockContentDtos[1]);
+    });
+
+    it('should handle empty values in update', async () => {
+      const mockContentDto: UpdateContentDto = {
+        id: 1,
+        key: 'greeting.empty',
+        value: '',
+        locale: 'fr-FR',
+      };
+
+      const mockUpdatedContent = {
+        id: 1,
+        key: 'greeting.empty',
+        value: '',
+        translationId: 1,
+      };
+
+      mockTranslationsService.updateTranslationContent.mockResolvedValue(
+        mockUpdatedContent,
+      );
+
+      const result = await controller.updateContents([mockContentDto]);
+
+      expect(result).toEqual([mockUpdatedContent]);
+      expect(
+        mockTranslationsService.updateTranslationContent,
+      ).toHaveBeenCalledWith(mockContentDto);
     });
   });
 });
