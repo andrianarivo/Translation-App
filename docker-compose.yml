@@ -1,0 +1,45 @@
+services:
+  next-frontend:
+    build:
+      context: ./frontend
+    image: translation-app-frontend
+    ports:
+      - "3003:3000"
+    networks:
+      - app-network
+    depends_on:
+      - nest-backend
+
+  nest-backend:
+    build:
+      context: ./backend
+    image: translation-app-backend
+    ports:
+      - "3002:3000"
+    networks:
+      - app-network
+    depends_on:
+      - postgres-db
+    environment:
+      - DATABASE_URL=postgresql://nest:root@postgres-db:5432/translation_db
+
+  postgres-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: nest
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: translation_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
