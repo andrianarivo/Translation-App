@@ -21,7 +21,7 @@ export function DeleteTranslations<TData>({
 
     return (
         table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button size="sm" onClick={handleClick}>
+            <Button size="sm" variant="destructive" onClick={handleClick}>
                 {isPending ?
                     (<><Loader2 className="animate-spin"/> Removing...</>) :
                     (<><Trash2 />Remove ({table.getFilteredSelectedRowModel().rows.length})</>)

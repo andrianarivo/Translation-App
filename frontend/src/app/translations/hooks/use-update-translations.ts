@@ -1,7 +1,7 @@
 import {fetchWrapper} from "@/lib/fetch-wrapper";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 
-async function updateTranslations(data: {id: number, key: string, value: string}[]) {
+async function updateTranslations(data: {id: number, key: string, value: string, locale: string}[]) {
     return fetchWrapper({
         path: `/translations/contents`,
         headers: {

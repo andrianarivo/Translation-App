@@ -10,7 +10,7 @@ interface TranslationUpdateContainerProps {
 
 export function TranslationUpdateContainer({ translation, setIsOpen }: TranslationUpdateContainerProps) {
     const { locales } = useLocales()
-    const { mutate: updateTranslation, isPending } = useUpdateTranslations()
+    const { mutate: updateTranslation, isPending, error } = useUpdateTranslations()
 
     const handleSubmit = (data: Translation) => {
         const updateDtos = locales.map(locale => ({
@@ -32,6 +32,7 @@ export function TranslationUpdateContainer({ translation, setIsOpen }: Translati
             isLoading={isPending}
             translation={translation}
             locales={locales}
+            errorMessage={error?.message}
         />
     )
 }
