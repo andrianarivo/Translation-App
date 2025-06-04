@@ -1,8 +1,9 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ValidateLocale } from '../../validators/validate-locale';
 
 export class UpdateContentDto {
   @IsNumber()
+  @IsOptional()
   id: number;
 
   @IsString()
@@ -11,11 +12,13 @@ export class UpdateContentDto {
 
   @IsString()
   @IsNotEmpty()
-  value: string;
+  @IsOptional()
+  value?: string;
 
   @IsString()
   @ValidateLocale('locale', {
     message: 'Locale must be valid',
   })
-  locale: string;
+  @IsOptional()
+  locale?: string;
 }

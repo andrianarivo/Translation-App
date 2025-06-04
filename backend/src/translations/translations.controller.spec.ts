@@ -496,7 +496,7 @@ describe('TranslationsController', () => {
       ).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw BadRequestException when no contents provided', async () => {
+    it('should throw Error when no contents provided', async () => {
       const emptyContentDtos: UpdateContentDto[] = [];
 
       await expect(controller.updateContents(emptyContentDtos)).rejects.toThrow(
@@ -517,11 +517,11 @@ describe('TranslationsController', () => {
       };
 
       mockTranslationsService.updateTranslationContent.mockRejectedValue(
-        new BadRequestException('Translation not found'),
+        new BadRequestException('Locale not found'),
       );
 
       await expect(controller.updateContents([mockContentDto])).rejects.toThrow(
-        new BadRequestException('Translation not found'),
+        new BadRequestException('Locale not found'),
       );
 
       expect(
@@ -557,12 +557,10 @@ describe('TranslationsController', () => {
 
       mockTranslationsService.updateTranslationContent
         .mockResolvedValueOnce(mockUpdatedContent)
-        .mockRejectedValueOnce(
-          new BadRequestException('Translation not found'),
-        );
+        .mockRejectedValueOnce(new BadRequestException('Locale not found'));
 
       await expect(controller.updateContents(mockContentDtos)).rejects.toThrow(
-        new BadRequestException('Translation not found'),
+        'Locale not found',
       );
 
       expect(

@@ -173,14 +173,19 @@ export class TranslationsService {
     key,
     value,
     locale,
-  }: Omit<Content, 'translationId'> & { locale: string }): Promise<Content> {
+  }: {
+    id?: number;
+    key: string;
+    value?: string;
+    locale?: string;
+  }): Promise<Content> {
     const translation = await this.prisma.translation.findFirst({
       where: {
         name: locale,
       },
     });
     if (!translation) {
-      throw new BadRequestException('Locale not found');
+      throw new Error('Locale not found');
     }
     return this.prisma.content.upsert({
       where: {

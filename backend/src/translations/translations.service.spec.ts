@@ -406,10 +406,10 @@ describe('TranslationsService', () => {
       mockPrismaService.translation.findFirst.mockResolvedValue(null);
 
       await expect(service.updateTranslationContent(mockInput)).rejects.toThrow(
-        BadRequestException,
+        Error,
       );
       await expect(service.updateTranslationContent(mockInput)).rejects.toThrow(
-        'Translation not found',
+        'Locale not found',
       );
 
       expect(mockPrismaService.translation.findFirst).toHaveBeenCalledWith({
