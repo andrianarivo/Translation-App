@@ -9,9 +9,9 @@ export function TranslationCreateContainer({ setIsOpen }: { setIsOpen?: (isOpen:
 
     const handleSubmit = (data: Translation) => {
         const createDtos = locales.map(locale => ({
-            id: data[`content_id%${locale}`] ? parseInt(data[`content_id%${locale}`]) : -1,
+            id: data[`content_id%${locale}`],
             key: data.key,
-            value: data[locale],
+            value: data[locale] as string,
             locale,
         }))
         createTranslation(createDtos, {

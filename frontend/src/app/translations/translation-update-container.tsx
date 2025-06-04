@@ -14,9 +14,9 @@ export function TranslationUpdateContainer({ translation, setIsOpen }: Translati
 
     const handleSubmit = (data: Translation) => {
         const updateDtos = locales.map(locale => ({
-            id: data[`content_id%${locale}`] ? parseInt(data[`content_id%${locale}`]) : -1,
+            id: data[`content_id%${locale}`] as number,
             key: data.key,
-            value: data[locale],
+            value: data[locale] as string,
             locale,
         }))
         updateTranslation(updateDtos, {
