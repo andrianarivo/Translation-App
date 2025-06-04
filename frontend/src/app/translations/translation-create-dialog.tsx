@@ -4,7 +4,7 @@ import {
     DialogTrigger
 } from "@/components/ui/dialog";
 import {Button} from "@/components/ui/button";
-import {Edit2, PlusIcon} from "lucide-react";
+import {PlusIcon} from "lucide-react";
 import * as React from "react";
 import {TranslationCreateContainer} from "@/app/translations/translation-create-container";
 

@@ -10,7 +10,7 @@ import {
     getFilteredRowModel,
     getPaginationRowModel,
     getSortedRowModel,
-    useReactTable, ColumnDef, HeaderContext,
+    useReactTable
 } from "@tanstack/react-table"
 import {DataTableViewOptions} from "@/components/custom/data-table-view-options"
 import {
@@ -24,10 +24,7 @@ import {
 import {DataTablePagination} from "@/components/custom/data-table-pagination"
 import {DataTableProps} from "@/types/data-table"
 import {Input} from "@/components/ui/input";
-import {Button} from "@/components/ui/button";
-import {DownloadIcon, PlusIcon, Trash2} from "lucide-react";
 import {DeleteTranslations} from "@/app/translations/delete-translations";
-import {TranslationCreateContainer} from "@/app/translations/translation-create-container";
 import {TranslationCreateDialog} from "@/app/translations/translation-create-dialog";
 import {TranslationExport} from "@/app/translations/translation-export";
 

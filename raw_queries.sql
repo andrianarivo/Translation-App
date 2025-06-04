@@ -1,18 +1,9 @@
 SELECT c.key,
-	c.value,
-	t.name as language
+	c.value
 FROM translations t 
-JOIN contents c 
+JOIN contents c
 ON c.translation_id = t.id
 WHERE t.name = 'en-US';
-
-SELECT c.key,
-	c.value,
-	t.name as language
-FROM translations t 
-JOIN contents c 
-ON c.translation_id = t.id
-WHERE t.name = 'fr-FR';
 
 SELECT * FROM translation_files;
 

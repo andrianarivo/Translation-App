@@ -9,18 +9,6 @@ import {CellContext, HeaderContext} from "@tanstack/react-table";
 import {DataTableColumnHeader} from "@/components/custom/data-table-column-header";
 import * as React from "react";
 import {Translation} from "@/types/models";
-import {
-    Dialog, DialogClose,
-    DialogContent,
-    DialogDescription, DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
-} from "@/components/ui/dialog";
-import {Button} from "@/components/ui/button";
-import {Label} from "@/components/ui/label";
-import {Input} from "@/components/ui/input";
-import {Edit2} from "lucide-react";
 import {TranslationUpdateDialog} from "@/app/translations/translation-update-dialog";
 
 export function TranslationTableContainer() {
@@ -34,7 +22,7 @@ export function TranslationTableContainer() {
         ),
     })) : []
 
-    let tableColumns = [
+    const tableColumns = [
         ...columns,
         ...localesColumns,
         {

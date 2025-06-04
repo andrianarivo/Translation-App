@@ -39,7 +39,7 @@ export function ImportFilesForm({ onSubmit, isLoading = false, loadingMessage = 
                 {files && (
                     <ul className="list-disc pl-4 pb-2 text-muted-foreground text-sm">
                     {
-                        files && (Object.entries(files).map(([_, value]) =>
+                        files && (Object.entries(files).map(([, value]) =>
                             <li key={value.name}>{value.name}</li>
                         ))
                     }
@@ -51,12 +51,11 @@ export function ImportFilesForm({ onSubmit, isLoading = false, loadingMessage = 
                     <FormField
                         control={form.control}
                         name="files"
-                        render={({field: {value, onChange, ...fieldProps}}) => (
+                        render={({field: {onChange}}) => (
                             <FormItem>
                                 <FormLabel>Files: </FormLabel>
                                 <FormControl>
                                     <Input
-                                        {...fieldProps}
                                         placeholder="Select files"
                                         type="file"
                                         accept="application/json"

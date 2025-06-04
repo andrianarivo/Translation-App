@@ -1,6 +1,6 @@
 export interface Translation {
     key: string,
-    [key: string]: string,
+    [key: string]: string | number,
 }
 
 export interface TranslationFile {

@@ -1,6 +1,5 @@
 import {useQuery} from "@tanstack/react-query";
 import {fetchWrapper} from "@/lib/fetch-wrapper";
-import {Translation} from "@/types/models";
 
 async function fetchTranslations(locales: string[]) {
     return fetchWrapper({

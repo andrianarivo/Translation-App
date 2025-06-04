@@ -1,5 +1,3 @@
-import {RequestHeaders} from "next/dist/client/components/router-reducer/fetch-server-response";
-
 interface FetchWrapperProps {
     path: string;
     body?: FormData | string;

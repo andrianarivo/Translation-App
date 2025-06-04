@@ -11,7 +11,7 @@ export function TranslationExport() {
 
     const handleClick = () => {
         if (exports) {
-            exports.forEach((data: Record<string, any>) => {
+            exports.forEach((data: Record<string, Record<string, object | string | number | boolean | null>>) => {
                 const locale = Object.keys(data)[0]
                 console.log(locale)
                 const keyValuePairs = data[locale]

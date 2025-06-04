@@ -26,16 +26,16 @@ export function TranslationForm({
 
     const defaultValues = React.useMemo(() => {
         const values = translation || {key: ''}
-        if (!translation) {
-            for (const locale of locales) {
-                values[locale] = ''
-            }
+        for (const locale of locales) {
+            values[`content_id%${locale}`] = values[`content_id%${locale}`] || -1
+            values[`translation_id%${locale}`] = values[`translation_id%${locale}`] || -1
+            values[locale] = values[locale] || ""
         }
         return values
     }, [translation, locales])
 
     const formSchema = React.useMemo(() => {
-        const schemaFields: Record<string, any> = {
+        const schemaFields: Record<string, object> = {
             key: Joi.string().required(),
         };
         locales.forEach(locale => {
@@ -93,7 +93,7 @@ export function TranslationForm({
                 <DialogHeader>
                     <DialogTitle>{translation ? "Edit" : "Create" } translation</DialogTitle>
                     <DialogDescription>
-                        Don't forget to save your changes.
+                        Don&#39;t forget to save your changes.
                         <br />
                         {errorMessage && <span className="text-destructive">{errorMessage}</span>}
                     </DialogDescription>

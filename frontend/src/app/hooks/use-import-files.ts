@@ -3,7 +3,7 @@ import {fetchWrapper} from "@/lib/fetch-wrapper";
 
 async function importFiles(data: { files: FileList}) {
     const formData = new FormData()
-    Object.entries(data.files).forEach(([_, file]) => {
+    Object.entries(data.files).forEach(([, file]) => {
         formData.append("files", file)
     })
 
