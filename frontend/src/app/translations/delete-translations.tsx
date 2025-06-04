@@ -5,7 +5,7 @@ import * as React from "react";
 import {useDeleteTranslations} from "@/app/translations/hooks/use-delete-translations";
 import {Translation} from "@/types/models";
 
-export function DeleteTranslations<TData extends Translation>({
+export function DeleteTranslations<TData>({
                                                     table,
                                                 }: {
     table: Table<TData>
@@ -13,7 +13,7 @@ export function DeleteTranslations<TData extends Translation>({
     const { mutate: deleteTranslations, isPending } = useDeleteTranslations()
 
     const handleClick = () => {
-        const keys = table.getFilteredSelectedRowModel().rows.map(row=> row.original.key)
+        const keys = table.getFilteredSelectedRowModel().rows.map(row=> (row.original as Translation).key)
         deleteTranslations(keys, {
             onSettled: () => table.resetRowSelection(),
         })
