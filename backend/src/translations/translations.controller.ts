@@ -159,4 +159,13 @@ export class TranslationsController {
       ),
     );
   }
+
+  @Get('export')
+  @HttpCode(200)
+  exportTranslations(
+    @Query('locales', new ParseArrayPipe({ items: String, separator: ',' }))
+    locales: string[],
+  ) {
+    return this.translationsService.exportTranslations(locales);
+  }
 }

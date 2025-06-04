@@ -7,6 +7,7 @@ import {
   TranslationFile,
 } from '../../generated/prisma';
 import { flattenObject } from '../utils/flatten-object.util';
+import { unflatten } from '../utils/unflatten-object.util';
 
 @Injectable()
 export class TranslationsService {
@@ -230,6 +231,35 @@ export class TranslationsService {
         value,
         translationId: translation.id,
       },
+    });
+  }
+
+  async exportTranslations(locales: string[]) {
+    const datas = await Promise.all(
+      locales.map(async (locale) => ({
+        [locale]: await this.prisma.content.findMany({
+          where: {
+            translation: {
+              name: {
+                equals: locale,
+              },
+            },
+          },
+          select: {
+            key: true,
+            value: true,
+          },
+        }),
+      })),
+    );
+
+    return datas.map((dataItem) => {
+      const locale = Object.keys(dataItem)[0];
+      const keyValuePairs = dataItem[locale];
+
+      return {
+        [locale]: unflatten(keyValuePairs),
+      };
     });
   }
 }
