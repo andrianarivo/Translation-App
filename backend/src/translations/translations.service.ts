@@ -174,18 +174,22 @@ export class TranslationsService {
     value,
     locale,
   }: {
-    id?: number;
+    id: number;
     key: string;
     value?: string;
     locale?: string;
   }): Promise<Content> {
+    if (!locale) {
+      throw new BadRequestException('Locale not provided');
+    }
+
     const translation = await this.prisma.translation.findFirst({
       where: {
         name: locale,
       },
     });
     if (!translation) {
-      throw new Error('Locale not found');
+      throw new BadRequestException('Locale not found');
     }
     return this.prisma.content.upsert({
       where: {
@@ -209,8 +213,8 @@ export class TranslationsService {
     locale,
   }: {
     key: string;
-    value: string;
-    locale: string;
+    value?: string;
+    locale?: string;
   }): Promise<Content> {
     const translation = await this.prisma.translation.findFirst({
       where: {
@@ -218,7 +222,7 @@ export class TranslationsService {
       },
     });
     if (!translation) {
-      throw new Error('Locale not found');
+      throw new BadRequestException('Locale not found');
     }
     return this.prisma.content.create({
       data: {

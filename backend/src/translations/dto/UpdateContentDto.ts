@@ -11,7 +11,6 @@ export class UpdateContentDto {
   key: string;
 
   @IsString()
-  @IsNotEmpty()
   @IsOptional()
   value?: string;
 
