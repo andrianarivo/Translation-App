@@ -27,6 +27,7 @@ import {Input} from "@/components/ui/input";
 import {DeleteTranslations} from "@/app/translations/delete-translations";
 import {TranslationCreateDialog} from "@/app/translations/translation-create-dialog";
 import {TranslationExport} from "@/app/translations/translation-export";
+import {TranslationGenerate} from "@/app/translations/translation-generate";
 
 export function TranslationTable<TData, TValue>({
                                              columns,
@@ -71,6 +72,7 @@ export function TranslationTable<TData, TValue>({
                     className="max-w-sm"
                 />
                 <TranslationExport />
+                <TranslationGenerate />
                 <DataTableViewOptions table={table} />
                 <TranslationCreateDialog />
                 <DeleteTranslations table={table} />
