@@ -11,14 +11,10 @@ RUN apk add --no-cache libc6-compat dumb-init
 
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+# Enable pnpm and install dependencies
+RUN corepack enable pnpm
+COPY package.json pnpm-lock.yaml* .npmrc* ./
+RUN pnpm i
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -29,20 +25,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma client
-RUN \
-  if [ -f yarn.lock ]; then yarn prisma generate; \
-  elif [ -f package-lock.json ]; then npm run prisma:generate || npx prisma@6.8.2 generate; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm prisma generate; \
-  else npx prisma@6.8.2 generate; \
-  fi
+RUN corepack enable pnpm && pnpm prisma generate
 
 # Build the NestJS application
-RUN \
-  if [ -f yarn.lock ]; then yarn build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm build; \
-  else npm run build; \
-  fi
+RUN corepack enable pnpm && pnpm build
 
 # Production image, copy all the files and run NestJS
 FROM base AS runner
@@ -58,16 +44,11 @@ RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nestjs -u 1001
 
 # Copy package files for production dependencies installation
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+COPY package.json pnpm-lock.yaml* .npmrc* ./
 COPY .env.example .env
 
-# Install only production dependencies based on package manager
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile --production && yarn cache clean; \
-  elif [ -f package-lock.json ]; then npm ci --only=production && npm cache clean --force; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --prod && pnpm store prune; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+# Install only production dependencies
+RUN corepack enable pnpm && pnpm i --prod && pnpm store prune
 
 # Copy built application and generated Prisma client
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
