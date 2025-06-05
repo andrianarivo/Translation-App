@@ -4,6 +4,7 @@ import { TranslationsService } from './translations.service';
 import { Prisma } from '../../generated/prisma';
 import { BadRequestException } from '@nestjs/common';
 import { UpdateContentDto } from './dto/UpdateContentDto';
+import { OpenaiService } from '../openai/openai.service';
 
 describe('TranslationsController', () => {
   let controller: TranslationsController;
@@ -20,6 +21,10 @@ describe('TranslationsController', () => {
     updateTranslationContent: jest.fn(),
   };
 
+  const mockOpenaiService = {
+    getMissingTranslations: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TranslationsController],
@@ -27,6 +32,10 @@ describe('TranslationsController', () => {
         {
           provide: TranslationsService,
           useValue: mockTranslationsService,
+        },
+        {
+          provide: OpenaiService,
+          useValue: mockOpenaiService,
         },
       ],
     }).compile();

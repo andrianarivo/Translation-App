@@ -20,10 +20,14 @@ import { TranslationsService } from './translations.service';
 import { validLocales } from '../utils/valid-locales';
 import { UpdateContentDto } from './dto/UpdateContentDto';
 import { CreateContentDto } from './dto/CreateContentDto';
+import { OpenaiService } from '../openai/openai.service';
 
 @Controller('translations')
 export class TranslationsController {
-  constructor(private readonly translationsService: TranslationsService) {}
+  constructor(
+    private readonly translationsService: TranslationsService,
+    private readonly openaiService: OpenaiService,
+  ) {}
 
   @Post('import')
   @HttpCode(201)
@@ -167,5 +171,21 @@ export class TranslationsController {
     locales: string[],
   ) {
     return this.translationsService.exportTranslations(locales);
+  }
+
+  @Post('generate')
+  @HttpCode(200)
+  async generateTranslations() {
+    const locales = await this.translationsService.locales();
+    const translations = await this.translationsService.translations(locales);
+    const missingTranslations = await this.openaiService.getMissingTranslations(
+      JSON.stringify(translations),
+    );
+    await Promise.all(
+      missingTranslations.map((missingTranslation) =>
+        this.translationsService.updateTranslationContent(missingTranslation),
+      ),
+    );
+    return missingTranslations;
   }
 }
